@@ -9,6 +9,7 @@
 - **Cours :** Deep Learning for Sequential Data and NLP (MSA-DAT07-01), Guillaume Saint-Cirgue.
 - **Sujet :** développer le cœur NLP d'un assistant de revue de clauses contractuelles pour une entreprise européenne de legal-tech.
 - **Repository :** [Charles-Scannavino/Projet_Deep_Learning](https://github.com/Charles-Scannavino/Projet_Deep_Learning), privé, branche principale `main`.
+- **Équipe de trois :** Charles Scannavino, Jacques et Khadidja. Les branches de travail des deux collaborateurs sont respectivement `Jacques` et `Khadidja`. La répartition des tâches reste à préciser.
 - **Livraison :** 23 octobre 2026 : dépôt GitHub et présentation PowerPoint (10 minutes de présentation, 5 minutes de questions).
 - **Point d'entrée fourni par l'enseignant :** [notebook Google Colab](https://colab.research.google.com/drive/1rVOdhKNtL9qk-6ZjuFc0ZcQlTLfvaUjg#scrollTo=9FwDLJi7Yodz). Le dataset, ses caractéristiques et les modalités d'utilisation devront être confirmés dans les exécutions du projet.
 
@@ -24,11 +25,11 @@ Un chatbot génératif, un agent et une interface web ne sont pas des exigences 
 ## 3. Méthode de travail
 
 - **Source de référence :** suivre l'énoncé et le notebook de l'enseignant. Les modèles, jeux de données et packages utilisés sont cités avec leur provenance.
-- **Notebooks de travail prévus :** `Charles_projet_DL_NLP(2).ipynb` (analyse, classification, recherche et audit) et `colab (1)(1).ipynb` (entraînement GPU). Ces fichiers doivent être inspectés, corrigés, testés et ajoutés au dépôt avant d'être qualifiés de livrables.
+- **Notebooks actuellement versionnés :** `notebooks/Projet_DL_NLP.ipynb` (analyse, classification, recherche et audit) et `notebooks/colab.ipynb` (entraînement GPU et sauvegarde Google Drive). Le code et les sorties existantes doivent encore être vérifiés et testés avant validation des livrables.
 - **Environnement :** Python et Hugging Face/PyTorch ; Google Colab avec GPU si nécessaire. Consigner versions et configuration réellement utilisées.
 - **Reproductibilité :** fixer les seeds ; conserver les paramètres, la version des modèles, les partitions, les métriques et les commandes d'exécution.
 - **Preuves :** aucune métrique, aucun modèle entraîné et aucun audit ne sont déclarés validés sans sortie d'exécution ou artefact correspondant.
-- **Git :** commits explicites, changements réalisés sur le bon repository ; vérifier l'état distant avant toute modification. Préserver l'historique et la traçabilité des contributions.
+- **Git :** commits explicites, changements réalisés sur le bon repository ; vérifier l'état distant avant toute modification. `main` accueille les contributions via pull requests depuis les branches de travail. Préserver l'historique et la traçabilité des contributions.
 
 ## 4. Protocole technique
 
