@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+.AppleDouble
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Environnements Python
+.venv/
+venv/
+env/
+ASM1_DeepLearning/
+anaconda3/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secrets et configuration locale
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Modèles et checkpoints volumineux
+artifacts/
+checkpoints/
+models/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+
+# Données locales et caches
+data/raw/
+data/processed/
+.cache/
+wandb/
+runs/
+
+# Fichiers temporaires
+*.log
+*.tmp
