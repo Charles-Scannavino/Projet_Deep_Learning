@@ -1,6 +1,6 @@
 # Contract Clause Review Assistant — Projet Deep Learning
 
-**Projet universitaire réalisé en équipe de trois** dans le cadre du cours *Deep Learning for Sequential Data and NLP* (Guillaume Saint-Cirgue, Albert School / Mines Paris-PSL).
+**Projet universitaire réalisé en équipe de trois** dans le cours *Deep Learning for Sequential Data and NLP* de Guillaume Saint-Cirgue (Albert School / Mines Paris-PSL).
 
 ## Équipe
 
@@ -8,72 +8,96 @@
 - **Jacques**
 - **Khadidja**
 
-La répartition précise des tâches sera indiquée lorsqu'elle aura été décidée collectivement.
+La répartition des travaux sera précisée une fois validée par l'équipe. Les contributions de chaque personne sont suivies dans Git.
 
-## Objectif
+## Sujet et livrables
 
-Développer le cœur NLP d'un assistant de revue de clauses contractuelles pour une application de legal-tech. Le projet comporte quatre composantes :
+Développer le cœur NLP d'un assistant de revue de clauses contractuelles pour une application de legal-tech :
 
-1. **Classification** de clauses par fine-tuning de BERT ou CamemBERT.
-2. **Pipeline complet** de tokenisation, d'entraînement et d'évaluation sur un jeu de test tenu à part.
-3. **Recherche sémantique** de clauses similaires à l'aide d'un Sentence-Transformer.
-4. **Audit des biais**, des erreurs et des limites d'utilisation du système.
+1. Classification des clauses par fine-tuning de **BERT ou CamemBERT**.
+2. Pipeline de **tokenisation, entraînement et évaluation** sur un jeu de test tenu à part.
+3. **Recherche sémantique** de clauses similaires avec un Sentence-Transformer.
+4. **Audit** des biais, modes de défaillance et limites d'utilisation.
 
-**Livraison : 23 octobre 2026**, avec code GitHub et présentation PowerPoint (10 minutes de présentation, 5 minutes de questions).
+**Échéance : 23 octobre 2026.** Livraison GitHub et présentation PowerPoint (10 minutes, puis 5 minutes de questions).
 
-## Données et modèles
+## Données et outils
 
-Les notebooks utilisent le jeu de données **LEDGAR**, issu de **LexGLUE**, accessible depuis Hugging Face via :
+Le projet utilise **LEDGAR** (LexGLUE), chargé depuis Hugging Face :
 
 ```python
 from datasets import load_dataset
 ledgar = load_dataset("coastalcph/lex_glue", "ledgar")
 ```
 
-Le code prévoit **100 catégories de clauses** et les partitions `train`, `validation` et `test`. Le chargement télécharge et met en cache les données au premier usage.
+| Partition | Nombre de clauses |
+| --- | ---: |
+| Entraînement | 60 000 |
+| Validation | 10 000 |
+| Test | 10 000 |
 
-Modèles prévus dans les notebooks :
-- **`bert-base-uncased`** pour la classification, avec fine-tuning.
-- **`sentence-transformers/all-MiniLM-L6-v2`** pour la recherche sémantique.
+Le dataset comporte **100 catégories de clauses**. Les modèles utilisés dans les notebooks sont `bert-base-uncased` (classification) et `sentence-transformers/all-MiniLM-L6-v2` (recherche sémantique).
 
-Ces modèles préentraînés sont téléchargés à l'exécution ; les poids du modèle BERT fine-tuné ne sont pas stockés dans Git.
+## Notebooks et exécution
 
-## Les deux notebooks du projet
-
-| Fichier | Utilisation |
+| Notebook | Fonction |
 | --- | --- |
-| [`notebooks/colab.ipynb`](notebooks/colab.ipynb) | Préparation des données, entraînement BERT sur Google Colab avec GPU, sauvegarde du checkpoint et copie vers Google Drive. |
-| [`notebooks/Projet_DL_NLP.ipynb`](notebooks/Projet_DL_NLP.ipynb) | Exploration et visualisation de LEDGAR, expérimentation de classification, évaluation et audit, recherche sémantique. |
+| [`notebooks/colab.ipynb`](notebooks/colab.ipynb) | Fine-tuning BERT sur Google Colab / GPU T4, validation, export du modèle et copie dans Google Drive. |
+| [`notebooks/Projet_DL_NLP.ipynb`](notebooks/Projet_DL_NLP.ipynb) | Exploration LEDGAR, mini-entraînement de diagnostic, chargement du modèle BERT entraîné, évaluation, analyse des confusions et recherche sémantique. |
 
-**Les notebooks sont des supports de travail en cours de vérification**, et non la preuve qu'un entraînement complet ou une évaluation finale a déjà été validé.
+Les deux notebooks **contiennent des sorties des exécutions réalisées les 16 et 17 octobre 2026** et ont été synchronisés par le commit [`3e278a8`](https://github.com/Charles-Scannavino/Projet_Deep_Learning/commit/3e278a88d38a1a0dbd36181c553b2bbd83a1728b). Ils ne doivent pas être relancés sans examiner les cellules : certaines réentraînent le modèle ou consultent le jeu de test.
 
-### Exécuter `colab.ipynb` sur Google Colab
+### Entraînement BERT — Google Colab
 
-1. Ouvrir [Google Colab](https://colab.research.google.com/) puis importer `notebooks/colab.ipynb`.
-2. Choisir un environnement d'exécution **GPU T4** lorsqu'il est disponible.
-3. Exécuter successivement la vérification GPU, l'installation et la préparation des données.
-4. Vérifier la configuration du `Trainer` ; lancer ensuite le fine-tuning si les paramètres conviennent. Le code actuellement versionné utilise **2 époques** et un batch size de **16**.
-5. **Seulement après la fin complète de l'entraînement**, exécuter la sauvegarde `bert-ledgar/`, puis sa copie vers `Google Drive/MyDrive/Projet_Deep_Learning/bert-ledgar/`.
+1. Ouvrir `notebooks/colab.ipynb` avec [Google Colab](https://colab.research.google.com/) ; sélectionner **GPU T4**.
+2. Exécuter la vérification du GPU, l'installation des bibliothèques, le chargement de LEDGAR et la tokenisation.
+3. Lancer la cellule `Trainer` **uniquement lorsqu'un nouvel entraînement est réellement souhaité** : `bert-base-uncased`, 100 classes, `max_length=256`, learning rate `2e-5`, batch size 16, 2 époques.
+4. Après les 7 500 étapes, exécuter la sauvegarde locale `bert-ledgar/` et l'archive `bert-ledgar.zip` ; autoriser Google Drive puis copier le dossier vers `MyDrive/Projet_Deep_Learning/bert-ledgar/`.
+5. La dernière cellule évalue **la validation** avec `tok["validation"]`, sans relancer l'entraînement. Elle ne constitue pas une seconde évaluation du jeu de test.
 
-**Attention : ne pas utiliser « Tout exécuter » pour l'instant.** La dernière cellule d'origine appelle `tokenized["test"]` au lieu de `tok["test"]` et accède prématurément au jeu de test. Elle devra être corrigée lors de la phase d'évaluation finale. Les checkpoints de `runs/` conservés uniquement dans la session Colab peuvent disparaître après déconnexion ; sauvegarder le modèle durablement.
+Les checkpoints Colab temporaires peuvent disparaître à la fermeture de la session. Le ZIP et la copie Drive permettent de **réutiliser les poids entraînés sans relancer `trainer.train()`**.
 
-### Ouvrir `Projet_DL_NLP.ipynb` dans VS Code
+### Analyse du modèle — VS Code / Mac
 
-Cloner le projet :
+1. Cloner le dépôt privé et ouvrir `notebooks/Projet_DL_NLP.ipynb` dans VS Code.
+2. Utiliser un noyau Python disposant de `torch`, `transformers`, `datasets`, `evaluate`, `numpy`, `matplotlib`, `scikit-learn`, `sentence-transformers`, `accelerate` et `ipykernel`. L'exécution documentée a utilisé **Python 3.12.15** dans un environnement Conda `Projet_Deep_Learning`.
+3. Pour charger BERT, extraire `bert-ledgar.zip` en `models/bert-ledgar/`. Ce répertoire est ignoré par Git. Adapter le chemin du checkpoint à l'emplacement du clone, plutôt que de supposer que les poids sont inclus dans GitHub.
+4. Exécuter les sections **sélectivement** : exploration, chargement du checkpoint, analyse des résultats et recherche sémantique. Un mini-fine-tuning local figure également dans le notebook mais n'est pas nécessaire pour utiliser le modèle Colab.
 
-```bash
-git clone https://github.com/Charles-Scannavino/Projet_Deep_Learning.git
-cd Projet_Deep_Learning
-code .
+Exemple de chargement depuis la racine du clone :
+
+```python
+from pathlib import Path
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+checkpoint = Path("models/bert-ledgar").resolve()
+tokenizer = AutoTokenizer.from_pretrained(str(checkpoint), local_files_only=True)
+model = AutoModelForSequenceClassification.from_pretrained(str(checkpoint), local_files_only=True)
+model.eval()
 ```
 
-Ouvrir `notebooks/Projet_DL_NLP.ipynb` dans VS Code avec l'extension Jupyter et un environnement Python disposant notamment de `datasets`, `transformers`, `torch`, `evaluate`, `scikit-learn`, `matplotlib` et `sentence-transformers`. L'environnement local sera documenté et figé lors des étapes de validation.
+**Attention aux limites du code actuel :** une cellule contient encore `!import datasets` (commande système ImageMagick, pas import Python) ; les statistiques de longueur tronquées à 512 tokens sous-estiment les très longues clauses ; la banque de recherche utilise actuellement le **split test**. Ces points sont consignés dans `AVANCEMENT.md` et doivent être corrigés/justifiés.
 
-Exécuter d'abord les cellules d'exploration. **Ne pas exécuter sans vérification les cellules d'entraînement redondant ou d'évaluation sur `test`**. Pour réutiliser BERT, il faudra récupérer le checkpoint entraîné sur Colab et corriger son chemin local `bert-ledgar/`.
+## Résultats obtenus
 
-Pour une comparaison non biaisée, les paramètres sont choisis sur **validation** et le jeu **test** n'est utilisé qu'à la fin.
+| Mesure | Résultat | Périmètre |
+| --- | ---: | --- |
+| Accuracy BERT | **84,24 %** | Validation, 10 000 clauses |
+| F1 macro BERT | **73,18 %** | Validation, 10 000 clauses |
+| Loss BERT | **0,6119** | Validation, après 2 époques |
+| Accuracy BERT | **84,48 %** | Test, 10 000 clauses |
+| F1 macro BERT (rapport par classe) | **environ 0,72** | Test ; rapport arrondi à deux décimales |
 
-## Organisation du dépôt
+Le fine-tuning complet sur GPU T4 a duré environ **1 h 28** pour deux époques (7 500 étapes). Le checkpoint a été conservé sur Google Drive et téléchargé sur Mac. Les prédictions test ont été produites localement (~12 min 32 s). Les résultats sont tirés des sorties enregistrées dans les notebooks.
+
+### Recherche sémantique et audit
+
+- **Recherche :** `all-MiniLM-L6-v2`, 10 000 clauses encodées, similarité cosinus et deux démonstrations de recherche top-5. Les exemples sont qualitatifs : **aucun Recall@k ou MRR vérifié à ce stade**.
+- **Audit initial :** rapports précision/rappel/F1 par catégorie et confusions ; faibles performances sur plusieurs catégories rares ou proches lexicalement. Une analyse approfondie des biais et des sous-groupes reste à faire.
+
+**Précaution d'évaluation :** le split test a déjà été consulté pendant les expérimentations. Il ne doit pas servir à ajuster les hyperparamètres ou à choisir rétrospectivement le meilleur modèle. Le corpus actuel du moteur de recherche est constitué de clauses du test ; cette limitation doit être corrigée ou clairement distinguée de l'évaluation de classification.
+
+## Organisation et suivi
 
 ```text
 Projet_Deep_Learning/
@@ -86,15 +110,14 @@ Projet_Deep_Learning/
     └── colab.ipynb
 ```
 
-- [`CONTEXT.md`](CONTEXT.md) : énoncé, choix et règles de travail.
-- [`AVANCEMENT.md`](AVANCEMENT.md) : étapes réellement exécutées, résultats vérifiés et prochaines actions.
+- [`CONTEXT.md`](CONTEXT.md) décrit les exigences, décisions et conventions durables.
+- [`AVANCEMENT.md`](AVANCEMENT.md) consigne les expériences vérifiées, les preuves, les problèmes et les prochaines tâches.
+- Les poids BERT, caches, fichiers volumineux et données locales ne doivent pas être poussés sur GitHub.
 
-## Travail collaboratif
+## Collaboration
 
-- **`main`** : branche d'intégration commune.
-- **`Jacques`** : branche de travail de Jacques.
-- **`Khadidja`** : branche de travail de Khadidja.
+- `main` : branche d'intégration du travail commun.
+- `Jacques` et `Khadidja` : branches de travail dédiées aux deux collaborateurs.
+- Chaque contribution est proposée via une pull request vers `main`, après synchronisation de la branche avec la version courante et vérification des fichiers modifiés.
 
-Chaque membre effectue ses commits sur sa branche de travail et propose une **pull request** vers `main`, avec une description des changements et des vérifications. Les droits d'accès au dépôt doivent être accordés séparément des branches.
-
-Les contributions sont tracées par Git. Ne pas publier de secrets, de contrats confidentiels, de caches ou de poids de modèles volumineux. Les résultats annoncés doivent correspondre à des exécutions vérifiables.
+Le système est un **prototype d'analyse documentaire** : ses sorties ne constituent pas un avis juridique, et tout usage dans un contrat réel nécessite une vérification humaine.

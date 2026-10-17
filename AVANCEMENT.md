@@ -11,9 +11,9 @@
 - **État initial vérifié du dépôt :** un `README.md` et un commit « Initial commit » du 16 octobre 2026.
 - **Équipe :** Charles Scannavino, Jacques et Khadidja ; branches `Jacques` et `Khadidja` créées pour le travail collaboratif.
 - **Documents :** `README.md`, `CONTEXT.md` et `AVANCEMENT.md` disponibles et actualisés.
-- **Notebooks :** `notebooks/Projet_DL_NLP.ipynb` (32 cellules) et `notebooks/colab.ipynb` (6 cellules, dont la copie du checkpoint sur Google Drive) publiés sur `main`, commit `b0a3f33`. Certaines sorties enregistrées sont anciennes et ne prouvent pas une exécution validée du nouveau projet.
-- **Exécutions constatées (captures des 16–17 octobre) :** BERT entraîné complètement sur Colab, checkpoint sauvegardé sur Google Drive et Mac puis rechargé dans VS Code. Accuracy validation **84,24 %**, F1 macro validation **73,18 %**, accuracy test **84,48 %** sur 10 000 clauses. Audit descriptif par classe et recherche sémantique top-5 exécutés. Les fichiers modifiés localement restent à synchroniser sur GitHub.
-- **Prochaine étape :** sauvegarder/synchroniser les notebooks modifiés, compléter le F1 macro du test et l'évaluation de la recherche sémantique, puis approfondir l'audit.
+- **Notebooks :** `notebooks/Projet_DL_NLP.ipynb` (**33 cellules**) et `notebooks/colab.ipynb` (**7 cellules**) publiés sous leurs noms exacts ; dernières versions locales synchronisées sur `main` par commit **`3e278a8`** du 17 octobre, avec code et sorties d'exécution. Des commentaires Markdown issus d'anciennes étapes restent à harmoniser.
+- **Exécutions constatées (captures des 16–17 octobre) :** BERT entraîné complètement sur Colab, checkpoint sauvegardé sur Google Drive et Mac puis rechargé dans VS Code. Accuracy validation **84,24 %**, F1 macro validation **73,18 %**, accuracy test **84,48 %** sur 10 000 clauses. Audit descriptif par classe et recherche sémantique top-5 exécutés. Les deux versions avec sorties ont été synchronisées sur GitHub par commit `3e278a8`.
+- **Prochaine étape :** fiabiliser les cellules reproductibles et la documentation des dépendances, mesurer les effets des textes longs et les biais, corriger le protocole de retrieval et préparer la présentation.
 
 ## 2. Feuille de route
 
@@ -29,11 +29,13 @@
 ### B — Préparation des notebooks
 - [x] Identifier et publier les deux notebooks originaux sous leurs noms exacts : `Projet_DL_NLP.ipynb` et `colab.ipynb`.
 - [x] Ajouter une cellule de sauvegarde Google Drive au notebook `colab.ipynb` (6 cellules au total).
-- [ ] Revoir et exécuter tous les blocs nécessaires des notebooks, cellule par cellule.
-- [ ] Qualifier puis retirer/actualiser les sorties anciennes non reproduites ; corriger les erreurs de variables/chemins. Les sorties préexistantes sont encore présentes dans les fichiers versionnés.
+- [x] Exécuter et conserver les sorties des principales sections des deux notebooks (Colab et VS Code, 16–17 octobre).
+- [ ] Séparer clairement les expériences de diagnostic, l'utilisation du modèle sauvegardé et la phase finale de test.
+- [ ] Corriger les références chiffrées périmées dans les cellules Markdown et la commande `!import datasets` ; adapter le chemin absolu du checkpoint à un chemin portable. Les nouvelles sorties d'exécution sont maintenant versionnées.
 - [ ] Définir la responsabilité de chaque notebook pour éviter les entraînements et tests redondants.
-- [x] Publier les deux notebooks dans le dépôt principal (commit `b0a3f33`).
-- [ ] Valider leur exécution complète après correction des cellules problématiques.
+- [x] Publier les notebooks (commit `b0a3f33`), puis leurs dernières versions exécutées et sorties (commit **`3e278a8`**).
+- [x] Vérifier l'entraînement Colab, l'usage du modèle sauvegardé en local, l'inférence test, l'audit initial et les démonstrations de recherche.
+- [ ] Finaliser le nettoyage des cellules, la robustesse et la reproductibilité.
 
 ### C — Données et exploration
 - [x] Charger LEDGAR (60 000 train, 10 000 validation, 10 000 test).
@@ -51,7 +53,8 @@
 - [x] Entraîner le modèle sur Colab (7 500 étapes, GPU T4), sauvegarder sur Google Drive et Mac puis recharger les poids en local.
 - [x] Mesurer accuracy val 0,8424, F1 macro val 0,7318, loss val 0,6119.
 - [x] Exécuter une inférence sur les 10 000 clauses de test : accuracy 0,8448, ~12 min 32 s.
-- [ ] Relever les métriques agrégées du test à partir des prédictions sauvegardées ; ne plus exploiter le test pour ajuster le modèle.
+- [x] Générer un `classification_report` sur test : macro précision **0,74**, macro rappel **0,73**, macro F1 **0,72** (arrondis à deux décimales) ; weighted F1 **0,83**.
+- [ ] Enregistrer les valeurs non arrondies, sans réentraîner ni ajuster le modèle sur test.
 
 ### E — Recherche sémantique
 - [x] Encoder une banque de 10 000 clauses avec all-MiniLM-L6-v2.
@@ -72,11 +75,11 @@
 | --- | --- | --- |
 | Accès au dépôt | Vérifié | Repository privé et branche `main` accessibles |
 | Documents de suivi | À jour | `README.md`, `CONTEXT.md`, `AVANCEMENT.md` |
-| Notebooks sources | Publiés, non encore validés entièrement | `notebooks/Projet_DL_NLP.ipynb`, `notebooks/colab.ipynb` ; commit `b0a3f33` |
+| Notebooks sources | Dernières versions exécutées publiées | `notebooks/Projet_DL_NLP.ipynb` (33 cellules), `notebooks/colab.ipynb` (7 cellules) ; commit **`3e278a8`** |
 | Dataset et exploration | Exécutés sur Mac | 60k/10k/10k, 100 classes, graphiques et classes rares |
 | Baseline | Classe majoritaire sur test | Accuracy 0,058 ; consultation précoce à documenter |
 | Fine-tuning BERT | Terminé, checkpoint rechargé | Accuracy val 0,8424 ; F1 macro val 0,7318 ; loss val 0,6119 |
-| Évaluation test | Prédictions réalisées | Accuracy test 0,8448, 10 000 clauses ; F1 agrégé à calculer |
+| Évaluation test | Prédictions et rapport par classe publiés | Accuracy 0,8448 ; macro-F1 0,72 (arrondi) ; weighted-F1 0,83 (arrondi), sur 10 000 clauses |
 | Recherche sémantique | Prototype exécuté | Banque de 10 000 clauses issues du test ; 2 requêtes top-5 ; pertinence quantitative non évaluée |
 | Audit | Première analyse réalisée | F1 par classe et confusions, sans audit approfondi |
 | PowerPoint | Non réalisé | À documenter |
@@ -105,7 +108,7 @@ Aucune valeur de performance n'est inscrite avant sa mesure vérifiable.
 
 ### 17 octobre 2026 — Résultats des exécutions Colab et VS Code
 
-- **Preuves :** captures d'écran des sorties des notebooks exécutés par l'utilisateur. Les dernières modifications et sorties locales ne sont pas encore confirmées comme publiées sur GitHub.
+- **Preuves :** captures d'écran et sorties désormais présentes dans les notebooks poussés sur GitHub (`3e278a8`).
 - **GPU T4 / entraînement complet :** 2 époques, 7 500 étapes, `bert-base-uncased`, batch 16, longueur 256, LR 2e-5. Après époque 1 : accuracy validation 0,8246, F1 macro validation 0,6996. Après époque 2 : accuracy validation **0,8424**, F1 macro validation **0,7318**, loss validation **0,6119**.
 - **Checkpoint :** `bert-ledgar.zip` téléchargé sur Mac, sauvegarde Drive confirmée, archive extraite en `models/bert-ledgar/` et chargée en local avec 100 classes ; sanity check sur 100 clauses de validation : accuracy 0,77.
 - **EDA :** 60 000 train, 10 000 validation, 10 000 test ; 100 classes ; `Governing Laws` 3 167 occurrences en train, `Books` 23 ; 11 classes sous 200, 3 classes sous 100. Le calcul existant des longueurs tronque à 512 tokens et doit être rectifié pour analyser les longues clauses.
@@ -113,8 +116,17 @@ Aucune valeur de performance n'est inscrite avant sa mesure vérifiable.
 - **Prédictions du BERT final sur test :** 10 000 clauses en ~12 min 32 s, accuracy **0,8448**. Fichiers locaux `test_preds.npy` et `test_labels.npy`. La baseline majoritaire a également consulté le test (accuracy 0,058), donc documenter ce protocole ; ne pas utiliser test pour de nouvelles décisions d'entraînement.
 - **Audit initial :** rapport précision/rappel/F1 par classe et confusions. F1 nul observé pour `Applicable Laws`, `Assigns` et `Books` ; confusions `Tax Withholdings` → `Withholdings` (72), `Applicable Laws` → `Governing Laws` (42), `Defined Terms` → `Definitions` (40).
 - **Recherche sémantique :** 10 000 clauses du test encodées par `all-MiniLM-L6-v2` (~1 min 20 s), top-5 pour deux requêtes juridiques avec réponses qualitativement plausibles ; la pertinence n'est pas encore évaluée quantitativement.
-- **À faire :** sauvegarder et synchroniser les deux notebooks corrigés, éliminer `!import datasets` et les anciennes affirmations chiffrées, calculer le F1 macro du test sur prédictions déjà générées, utiliser une banque documentaire hors test, analyser les échecs et documenter la reproductibilité.
+- **État du rapport test :** macro-F1 **0,72** et weighted-F1 **0,83**, valeurs arrondies à deux décimales dans `classification_report`. Les sorties sont présentes dans le notebook versionné.
+- **À faire :** éliminer `!import datasets` et harmoniser les affirmations Markdown, rendre portable le chemin du checkpoint, publier les dépendances, mesurer les longueurs sans troncature, utiliser une banque documentaire hors test, approfondir l'audit et évaluer le retrieval.
 
+### 17 octobre 2026 — Synchronisation des notebooks exécutés et documentation
+
+- Les versions de référence provenant de `Documents/Projets/Projet_Deep_Learning/Notebook/` ont été copiées dans le clone Git sous leurs **noms exacts**.
+- Publication sur `main` par **commit `3e278a8`** (*Update notebooks with latest Colab and VS Code executions*) ; seules les deux copies sous `notebooks/Projet_DL_NLP.ipynb` et `notebooks/colab.ipynb` ont été suivies dans ce commit.
+- Contenu vérifié sur GitHub : `Projet_DL_NLP.ipynb` possède **33 cellules**, dont les sorties de l'analyse LEDGAR, de l'inférence test, du rapport des 100 classes et des démonstrations sémantiques. `colab.ipynb` possède **7 cellules**, avec entraînement complet et validation, copie réussie du modèle sur Drive.
+- Agrégats publiés du rapport de classification test : précision macro **0,74**, rappel macro **0,73**, F1 macro **0,72**, F1 pondéré **0,83** (tous arrondis par scikit-learn). Accuracy test exacte relevée séparément : **0,8448**.
+- Le notebook VS Code contient encore une commande ImageMagick `!import datasets`, des commentaires historiques et un chemin absolu vers le checkpoint du Mac : éléments à corriger sans modifier ni inventer les sorties mesurées.
+- Documentation `README.md` et `AVANCEMENT.md` actualisée après contrôle des deux notebooks publiés.
 ## 5. Format des prochaines mises à jour
 
 Après chaque étape significative, ajouter une entrée contenant :
