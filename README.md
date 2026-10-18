@@ -38,6 +38,17 @@ ledgar = load_dataset("coastalcph/lex_glue", "ledgar")
 
 Le dataset comporte **100 catégories de clauses**. Les modèles utilisés dans les notebooks sont `bert-base-uncased` (classification) et `sentence-transformers/all-MiniLM-L6-v2` (recherche sémantique).
 
+## Télécharger le modèle BERT fine-tuné
+
+Le modèle entraîné (poids BERT et tokenizer, 100 classes LEDGAR) est disponible sous forme d'archive ZIP attachée à une **GitHub Release** du dépôt privé :
+
+- **[Release `v1.0-bert-ledgar` — BERT LEDGAR, modèle fine-tuné](https://github.com/Charles-Scannavino/Projet_Deep_Learning/releases/tag/v1.0-bert-ledgar)**
+- **[Télécharger directement `bert-ledgar.zip` (~406 Mo)](https://github.com/Charles-Scannavino/Projet_Deep_Learning/releases/download/v1.0-bert-ledgar/bert-ledgar.zip)**
+
+Le fichier est hébergé dans les **Assets de la Release**, pas dans l'arborescence du code (`main`). L'accès au téléchargement nécessite un compte GitHub autorisé à lire ce repository privé.
+
+Après téléchargement, extraire le dossier `bert-ledgar/` dans `models/bert-ledgar/` à la racine du clone. Le modèle peut ensuite être rechargé avec `AutoTokenizer.from_pretrained("models/bert-ledgar")` et `AutoModelForSequenceClassification.from_pretrained("models/bert-ledgar")`. Ce chargement ne nécessite **aucun nouvel entraînement**. Le chemin absolu présent dans une cellule du notebook doit être adapté au Mac de chaque contributeur.
+
 ## Notebooks et exécution
 
 | Notebook | Fonction |

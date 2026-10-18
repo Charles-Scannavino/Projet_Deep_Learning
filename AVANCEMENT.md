@@ -2,7 +2,7 @@
 
 > Journal factuel des travaux. `CONTEXT.md` contient le périmètre et les décisions durables ; ce fichier suit les étapes effectuées, les preuves et les tâches suivantes.
 
-**Dernière mise à jour : 17 octobre 2026.**
+**Dernière mise à jour : 18 octobre 2026.**
 
 ## 1. État actuel
 
@@ -13,6 +13,7 @@
 - **Documents :** `README.md`, `CONTEXT.md` et `AVANCEMENT.md` disponibles et actualisés.
 - **Notebooks :** `notebooks/Projet_DL_NLP.ipynb` (**33 cellules**) et `notebooks/colab.ipynb` (**7 cellules**) publiés sous leurs noms exacts ; dernières versions locales synchronisées sur `main` par commit **`3e278a8`** du 17 octobre, avec code et sorties d'exécution. Des commentaires Markdown issus d'anciennes étapes restent à harmoniser.
 - **Exécutions constatées (captures des 16–17 octobre) :** BERT entraîné complètement sur Colab, checkpoint sauvegardé sur Google Drive et Mac puis rechargé dans VS Code. Accuracy validation **84,24 %**, F1 macro validation **73,18 %**, accuracy test **84,48 %** sur 10 000 clauses. Audit descriptif par classe et recherche sémantique top-5 exécutés. Les deux versions avec sorties ont été synchronisées sur GitHub par commit `3e278a8`.
+- **Checkpoint BERT téléchargeable :** GitHub Release [`v1.0-bert-ledgar`](https://github.com/Charles-Scannavino/Projet_Deep_Learning/releases/tag/v1.0-bert-ledgar) contenant `bert-ledgar.zip` (~406 Mo), accessible aux collaborateurs autorisés.
 - **Prochaine étape :** fiabiliser les cellules reproductibles et la documentation des dépendances, mesurer les effets des textes longs et les biais, corriger le protocole de retrieval et préparer la présentation.
 
 ## 2. Feuille de route
@@ -127,6 +128,13 @@ Aucune valeur de performance n'est inscrite avant sa mesure vérifiable.
 - Agrégats publiés du rapport de classification test : précision macro **0,74**, rappel macro **0,73**, F1 macro **0,72**, F1 pondéré **0,83** (tous arrondis par scikit-learn). Accuracy test exacte relevée séparément : **0,8448**.
 - Le notebook VS Code contient encore une commande ImageMagick `!import datasets`, des commentaires historiques et un chemin absolu vers le checkpoint du Mac : éléments à corriger sans modifier ni inventer les sorties mesurées.
 - Documentation `README.md` et `AVANCEMENT.md` actualisée après contrôle des deux notebooks publiés.
+### 18 octobre 2026 — Publication du checkpoint entraîné dans une GitHub Release
+
+- L'archive **`bert-ledgar.zip`** contenant le modèle BERT et le tokenizer a été publiée comme asset de la Release **[`v1.0-bert-ledgar`](https://github.com/Charles-Scannavino/Projet_Deep_Learning/releases/tag/v1.0-bert-ledgar)** du repository principal privé.
+- Vérification via GitHub : Release publiée, non brouillon, asset disponible de **405 734 596 octets** (~406 Mo décimaux). Le fichier n'est pas suivi dans l'historique Git `main` afin d'éviter les limites GitHub pour les fichiers volumineux.
+- Le README pointe désormais vers la Release et le téléchargement direct ; les instructions expliquent le rechargement local du checkpoint, sans réentraîner BERT.
+- Les performances de classification ne sont pas modifiées par cette publication. La revue technique et la reproductibilité des notebooks restent à approfondir.
+
 ## 5. Format des prochaines mises à jour
 
 Après chaque étape significative, ajouter une entrée contenant :
