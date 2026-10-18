@@ -64,8 +64,8 @@
 
 ### F — Audit et livraison
 - [x] Calculer le rapport par classe et les confusions principales.
-- [ ] Compléter l'analyse des échecs, de la troncature et des limites.
-- [ ] Décrire les biais observables et les limites juridiques du système.
+- [x] Compléter l'analyse des échecs, de la troncature et des limites — section 6 ajoutée dans `Projet_DL_NLP.ipynb`.
+- [x] Décrire les biais observables et les limites juridiques du système — section 6.5 documentée.
 - [ ] Finaliser la documentation et les commandes de reproduction.
 - [ ] Préparer le PowerPoint et vérifier le repository final.
 
@@ -118,6 +118,18 @@ Aucune valeur de performance n'est inscrite avant sa mesure vérifiable.
 - **Recherche sémantique :** 10 000 clauses du test encodées par `all-MiniLM-L6-v2` (~1 min 20 s), top-5 pour deux requêtes juridiques avec réponses qualitativement plausibles ; la pertinence n'est pas encore évaluée quantitativement.
 - **État du rapport test :** macro-F1 **0,72** et weighted-F1 **0,83**, valeurs arrondies à deux décimales dans `classification_report`. Les sorties sont présentes dans le notebook versionné.
 - **À faire :** éliminer `!import datasets` et harmoniser les affirmations Markdown, rendre portable le chemin du checkpoint, publier les dépendances, mesurer les longueurs sans troncature, utiliser une banque documentaire hors test, approfondir l'audit et évaluer le retrieval.
+
+### 17 octobre 2026 — Section 6 audit approfondi ajoutée au notebook
+
+- **Branche :** `Khadidja` (commit `7626cbf` local, non encore poussé).
+- **Section 6 ajoutée** dans `notebooks/Projet_DL_NLP.ipynb` (8 nouvelles cellules) :
+  - **6.1** Analyse qualitative des 9 classes à F1 = 0 : paires quasi-synonymes vs sous-représentation extrême.
+  - **6.2** Effet de la troncature (`max_length=256`) : comparaison accuracy/F1 macro sur clauses ≤ 256 tokens vs > 256.
+  - **6.3** Scatter taille d'entraînement / F1 par classe + corrélation de Spearman.
+  - **6.4** Diagramme de calibration (reliability diagram) + ECE sur 2 000 clauses.
+  - **6.5** Documentation des limites et usages non recommandés (tableau des biais, liste des 9 classes à F1 nul, recommandations production).
+- **Packages installés en local :** `datasets 5.1.0`, `evaluate 0.4.6`, `sentence-transformers 6.1.0`, `accelerate 1.15.0`, `transformers 5.20.1`. `torchvision` et `torchaudio` désinstallés (incompatibles torch 2.8.0, inutiles pour ce projet NLP).
+- **À faire :** exécuter la section 6 pour obtenir les sorties réelles ; pousser la branche sur GitHub.
 
 ### 17 octobre 2026 — Synchronisation des notebooks exécutés et documentation
 
