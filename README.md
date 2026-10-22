@@ -49,6 +49,46 @@ Le fichier est hébergé dans les **Assets de la Release**, pas dans l'arboresce
 
 Après téléchargement, extraire le dossier `bert-ledgar/` dans `models/bert-ledgar/` à la racine du clone. Le modèle peut ensuite être rechargé avec `AutoTokenizer.from_pretrained("models/bert-ledgar")` et `AutoModelForSequenceClassification.from_pretrained("models/bert-ledgar")`. Ce chargement ne nécessite **aucun nouvel entraînement**. Le chemin absolu présent dans une cellule du notebook doit être adapté au Mac de chaque contributeur.
 
+## Comment fonctionne le modèle et comment l'utiliser ?
+
+**Classification des clauses.** Notre modèle est un `bert-base-uncased` préentraîné puis *fine-tuné* sur les **60 000 clauses d'entraînement LEDGAR**, réparties en **100 catégories**. Lorsqu'une clause en anglais est fournie, son tokenizer **WordPiece** la convertit en identifiants numériques (`input_ids`) et construit un masque d'attention (`attention_mask`). Le texte est limité à **256 tokens** ; au-delà, la fin est tronquée. L'encodeur Transformer BERT exploite la **self-attention bidirectionnelle** pour représenter les mots dans leur contexte. Sa tête de classification produit **100 logits** ; la catégorie prédite correspond au logit maximal. On peut appliquer un *softmax* pour obtenir des scores normalisés, mais ceux-ci ne doivent pas être interprétés comme des probabilités juridiques parfaitement fiables. Pendant le fine-tuning, la **cross-entropy**, la rétropropagation et l'optimiseur ont ajusté les poids du modèle pour rapprocher ses prédictions des catégories réelles. **Une fois le checkpoint sauvegardé, l'inférence ne nécessite aucun nouvel entraînement.**
+
+**Tester une clause avec le modèle sauvegardé** (depuis la racine du clone, après extraction du ZIP en `models/bert-ledgar/`) :
+
+```python
+import torch
+from pathlib import Path
+from datasets import load_dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+checkpoint = Path("models/bert-ledgar").resolve()
+assert (checkpoint / "model.safetensors").is_file(), "Télécharger et extraire bert-ledgar.zip"
+
+tokenizer = AutoTokenizer.from_pretrained(str(checkpoint), local_files_only=True)
+model = AutoModelForSequenceClassification.from_pretrained(
+    str(checkpoint), local_files_only=True
+)
+model.eval()
+
+# Les noms et l'ordre des catégories correspondent au dataset utilisé pendant l'entraînement.
+labels = load_dataset("coastalcph/lex_glue", "ledgar")["train"].features["label"].names
+
+clause = "This Agreement shall be governed by the laws of the State of New York."
+inputs = tokenizer(clause, return_tensors="pt", truncation=True, max_length=256)
+
+with torch.inference_mode():
+    logits = model(**inputs).logits
+    scores = torch.softmax(logits, dim=-1)[0]
+    pred_id = int(scores.argmax())
+
+print("Catégorie prédite :", labels[pred_id])
+print("Score softmax :", round(float(scores[pred_id]), 4))
+```
+
+Installer au minimum `torch`, `transformers` et `datasets`. La sortie illustre une **prédiction du modèle**, pas une qualification juridique définitive. Le modèle classe les clauses **en anglais**, et les clauses dépassant 256 tokens peuvent perdre des informations utiles par troncature.
+
+**Recherche sémantique (second modèle distinct).** `sentence-transformers/all-MiniLM-L6-v2` encode chaque clause d'une banque documentaire et la requête de l'utilisateur dans un espace vectoriel commun. Après normalisation, la **similarité cosinus** est calculée par produit scalaire, puis les `k` clauses les plus proches sont retournées avec leur score. Cette recherche ne requiert pas le checkpoint BERT de classification ; son implémentation figure dans `Projet_DL_NLP.ipynb`.
+
 ## Notebooks et exécution
 
 | Notebook | Fonction |
