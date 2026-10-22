@@ -2,7 +2,7 @@
 
 > Journal factuel des travaux. `CONTEXT.md` contient le périmètre et les décisions durables ; ce fichier suit les étapes effectuées, les preuves et les tâches suivantes.
 
-**Dernière mise à jour : 18 octobre 2026.**
+**Dernière mise à jour : 22 octobre 2026.**
 
 ## 1. État actuel
 
@@ -14,7 +14,33 @@
 - **Notebooks :** `notebooks/Projet_DL_NLP.ipynb` (**33 cellules**) et `notebooks/colab.ipynb` (**7 cellules**) publiés sous leurs noms exacts ; dernières versions locales synchronisées sur `main` par commit **`3e278a8`** du 17 octobre, avec code et sorties d'exécution. Des commentaires Markdown issus d'anciennes étapes restent à harmoniser.
 - **Exécutions constatées (captures des 16–17 octobre) :** BERT entraîné complètement sur Colab, checkpoint sauvegardé sur Google Drive et Mac puis rechargé dans VS Code. Accuracy validation **84,24 %**, F1 macro validation **73,18 %**, accuracy test **84,48 %** sur 10 000 clauses. Audit descriptif par classe et recherche sémantique top-5 exécutés. Les deux versions avec sorties ont été synchronisées sur GitHub par commit `3e278a8`.
 - **Checkpoint BERT téléchargeable :** GitHub Release [`v1.0-bert-ledgar`](https://github.com/Charles-Scannavino/Projet_Deep_Learning/releases/tag/v1.0-bert-ledgar) contenant `bert-ledgar.zip` (~406 Mo), accessible aux collaborateurs autorisés.
-- **Prochaine étape :** fiabiliser les cellules reproductibles et la documentation des dépendances, mesurer les effets des textes longs et les biais, corriger le protocole de retrieval et préparer la présentation.
+- **Prochaine étape (revue du 22 octobre) :** examiner puis intégrer sans perte les contributions de `Khadidja`, corriger la métrique ECE, fiabiliser protocole et dépendances, puis préparer la présentation. Voir le bilan mission par mission ci-dessous.
+
+## 1 bis. Contrôle des quatre missions de CONTEXT.md — 22 octobre 2026
+
+Vérification réalisée à partir des **sorties enregistrées** dans `notebooks/colab.ipynb` et `notebooks/Projet_DL_NLP.ipynb` sur la branche `main`, de la Release du checkpoint, ainsi que des travaux **non fusionnés** sur la branche `Khadidja`. Aucune nouvelle exécution expérimentale ni fusion de code n'a été effectuée lors de cette vérification. La réussite du test manuel en Terminal a été communiquée par l'utilisateur ; elle n'est pas encore enregistrée comme test automatisé dans le dépôt.
+
+| Mission de `CONTEXT.md` | Statut sur `main` | Preuves vérifiées | Ce qu'il reste à réaliser / vérifier |
+| --- | --- | --- | --- |
+| **1. Classification BERT/CamemBERT** | **Réalisée** | `colab.ipynb` : `bert-base-uncased` fine-tuné sur 60 000 clauses LEDGAR, 100 classes, 2 époques, 7 500 étapes. Checkpoint `bert-ledgar.zip` publié en Release `v1.0-bert-ledgar`. | Pas de nouvel entraînement requis ; vérifier l'identité du modèle chargé dans toutes les démonstrations. |
+| **2. Pipeline NLP (tokeniser, entraîner, évaluer sur test tenu à part)** | **Réalisée avec réserves méthodologiques** | Tokenisation WordPiece (`max_length=256`), `DataCollatorWithPadding`, `Trainer`, validation accuracy **0,8424** / F1 macro **0,731838**, inférence BERT final sur 10 000 clauses test : accuracy **0,8448**, rapport par classe et confusions. | Un mini-modèle et la baseline ont consulté le test prématurément. Ne plus utiliser le test pour ajuster le modèle ; vérifier doublons / chevauchements entre splits, nettoyer cellules historiques, fournir des dépendances figées, chemins portables et procédure reproductible. |
+| **3. Recherche sémantique Sentence-Transformer** | **Prototype réalisé ; évaluation incomplète** | `Projet_DL_NLP.ipynb` sur `main` : `all-MiniLM-L6-v2`, embeddings normalisés, cosinus et deux requêtes top-5 sur 10 000 clauses. | Sur `main`, la banque documentaire provient du **test**. La branche `Khadidja` utilise **60 000 clauses du train** et contient des sorties de recherche, mais n'est **pas fusionnée**. Vérifier la pertinence des résultats et évaluer si possible avec jugements de pertinence, Recall@k/MRR ; afficher aussi des identifiants de clauses si un index documentaire exploitable est attendu. |
+| **4. Audit : biais, erreurs, défaillances, usages et limites** | **Partiellement réalisée sur `main` ; approfondie sur branche non fusionnée** | `main` : F1 par classe, classes rares et confusions (ex. `Tax Withholdings` → `Withholdings`, 72 cas). Sur `Khadidja` : neuf classes au F1 nul, comparaison clauses ≤ 256 / > 256 tokens (**0,728 / 0,656** F1 macro), corrélation Spearman support train/F1 **0,500**, exemples d'erreurs, diagramme de calibration et limites d'usage juridique. | Revoir puis intégrer les résultats de `Khadidja`. **ECE annoncé 0,0195 à recalculer** : le code compare l'accuracy des bins à leur centre plutôt qu'à la confiance moyenne de chaque bin. Documenter explicitement les limites non mesurées (négations, chiffres, sous-populations indisponibles) et les usages à proscrire ; éviter les conclusions juridiques automatiques. |
+
+**Bilan :** les quatre missions possèdent une implémentation ou des analyses réelles, mais **toutes ne sont pas finalisées sur `main`**. Missions 1 et 2 techniquement accomplies ; mission 3 opérationnelle sans évaluation systématique de pertinence ; mission 4 initiale sur `main`, plus aboutie mais non intégrée sur `Khadidja`. L'existence d'une sortie de cellule ne remplace pas une vérification de protocole.
+
+**Éléments complémentaires vérifiés :**
+- Le `README.md` explique désormais le fonctionnement de BERT et contient un exemple Python d'inférence (`ad6003c`).
+- **Test manuel utilisateur du 22 octobre, hors notebook versionné :** sur une clause de confidentialité formulée pour la démonstration, le checkpoint local a prédit `Confidentiality` (**97,50 %** softmax), puis `Disclosures` (**0,46 %**) et `Publicity` (**0,15 %**). Cette seule clause ne constitue pas une nouvelle évaluation statistique ; les scores softmax ne sont pas des garanties juridiques.
+- Sur `Khadidja`, le tableau BERT vs DistilBERT présente des valeurs du modèle externe directement renseignées dans le code : **comparaison non établie comme reproduite sous le même protocole**, à sourcer ou exécuter avant la soutenance.
+- Les branches `main` et `Khadidja` ont divergé ; **ne pas écraser `AVANCEMENT.md`** lors d'une future fusion. Examiner les cellules, sorties et différences avant d'intégrer les contributions.
+- Les fichiers `CONTEXT.md`, les notebooks et les modèles n'ont pas été modifiés par cette mise à jour documentaire.
+
+### Priorités avant la remise du 23 octobre 2026
+
+1. Réviser et intégrer de manière contrôlée les contributions de `Khadidja` ; corriger l'ECE et qualifier la comparaison externe.
+2. Assainir la méthodologie test/retrieval et la reproductibilité (dépendances, chemins, sorties, doublons et chevauchements).
+3. Préparer la soutenance de 10 minutes et ses preuves : pipeline, résultats, classes rares, limites juridiques ; vérifier la présentation et l'historique Git.
 
 ## 2. Feuille de route
 
