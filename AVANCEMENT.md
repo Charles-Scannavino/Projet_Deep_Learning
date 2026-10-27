@@ -2,7 +2,7 @@
 
 > Journal factuel des travaux. `CONTEXT.md` contient le périmètre et les décisions durables ; ce fichier suit les étapes effectuées, les preuves et les tâches suivantes.
 
-**Dernière mise à jour : 17 octobre 2026.**
+**Dernière mise à jour : 23 octobre 2026.**
 
 ## 1. État actuel
 
@@ -13,7 +13,8 @@
 - **Documents :** `README.md`, `CONTEXT.md` et `AVANCEMENT.md` disponibles et actualisés.
 - **Notebooks :** `notebooks/Projet_DL_NLP.ipynb` (**33 cellules**) et `notebooks/colab.ipynb` (**7 cellules**) publiés sous leurs noms exacts ; dernières versions locales synchronisées sur `main` par commit **`3e278a8`** du 17 octobre, avec code et sorties d'exécution. Des commentaires Markdown issus d'anciennes étapes restent à harmoniser.
 - **Exécutions constatées (captures des 16–17 octobre) :** BERT entraîné complètement sur Colab, checkpoint sauvegardé sur Google Drive et Mac puis rechargé dans VS Code. Accuracy validation **84,24 %**, F1 macro validation **73,18 %**, accuracy test **84,48 %** sur 10 000 clauses. Audit descriptif par classe et recherche sémantique top-5 exécutés. Les deux versions avec sorties ont été synchronisées sur GitHub par commit `3e278a8`.
-- **Prochaine étape :** fiabiliser les cellules reproductibles et la documentation des dépendances, mesurer les effets des textes longs et les biais, corriger le protocole de retrieval et préparer la présentation.
+- **Prochaine étape (au 17 octobre) :** fiabiliser les cellules reproductibles et la documentation des dépendances, mesurer les effets des textes longs et les biais, corriger le protocole de retrieval et préparer la présentation.
+- **État au 23 octobre :** ces étapes sont réalisées (voir l'entrée « 18–23 octobre » du journal). Modèle retenu : **Legal-BERT v2**, accuracy test **87,61 %**, macro-F1 test **81,24 %**. Notebook principal entièrement exécuté (sections 1 à 9), README réécrit, présentation prête.
 
 ## 2. Feuille de route
 
@@ -80,9 +81,10 @@
 | Baseline | Classe majoritaire sur test | Accuracy 0,058 ; consultation précoce à documenter |
 | Fine-tuning BERT | Terminé, checkpoint rechargé | Accuracy val 0,8424 ; F1 macro val 0,7318 ; loss val 0,6119 |
 | Évaluation test | Prédictions et rapport par classe publiés | Accuracy 0,8448 ; macro-F1 0,72 (arrondi) ; weighted-F1 0,83 (arrondi), sur 10 000 clauses |
-| Recherche sémantique | Prototype exécuté | Banque de 10 000 clauses issues du test ; 2 requêtes top-5 ; pertinence quantitative non évaluée |
-| Audit | Première analyse réalisée | F1 par classe et confusions, sans audit approfondi |
-| PowerPoint | Non réalisé | À documenter |
+| Recherche sémantique | Exécutée | Banque de **60 000 clauses du train** (aucune du test) ; requêtes top-5 ; pertinence évaluée qualitativement, pas de Recall@k |
+| Audit | Complet | Sections 4, 6, 7 et 9 : par type, troncature, calibration, famille de contrat, forme du texte, fuite de données, usages à proscrire |
+| Version 2 (Legal-BERT) | Retenue | Validation 0,8763 / 0,8057 ; test 0,8761 / 0,8124 ; McNemar p < 0,001 (`colab_v2_legalbert.ipynb`, section 7) |
+| Présentation | Réalisée | Deck de 13 slides et guide de soutenance |
 
 Aucune valeur de performance n'est inscrite avant sa mesure vérifiable.
 
@@ -139,6 +141,20 @@ Aucune valeur de performance n'est inscrite avant sa mesure vérifiable.
 - Agrégats publiés du rapport de classification test : précision macro **0,74**, rappel macro **0,73**, F1 macro **0,72**, F1 pondéré **0,83** (tous arrondis par scikit-learn). Accuracy test exacte relevée séparément : **0,8448**.
 - Le notebook VS Code contient encore une commande ImageMagick `!import datasets`, des commentaires historiques et un chemin absolu vers le checkpoint du Mac : éléments à corriger sans modifier ni inventer les sorties mesurées.
 - Documentation `README.md` et `AVANCEMENT.md` actualisée après contrôle des deux notebooks publiés.
+
+### 18–23 octobre 2026 — Évaluation, audit complet et version 2 (branche `Khadidja`)
+
+- **Évaluation v1 en local (Windows, CPU)** : checkpoint `bert-ledgar` rechargé depuis `models/bert-ledgar/`, inférence des 10 000 clauses de test (≈ 1 h 40), accuracy **0,8448**, macro-F1 **0,7213**. Prédictions versionnées (`test_preds.npy`, `test_labels.npy`).
+- **Corrections du notebook** : banque de recherche reconstruite sur les **60 000 clauses du train** ; longueurs mesurées sans troncature ; chemin du checkpoint rendu relatif ; interprétation de l'ECE corrigée (0,0195 = faible) ; commande `!import datasets` absente.
+- **Section 6 exécutée** : 9 types à F1 nul, troncature (−7,2 points de macro-F1 au-delà de 256 tokens), Spearman taille/F1 ρ = 0,50, calibration ECE 0,0195.
+- **Version 2** (`notebooks/colab_v2_legalbert.ipynb`, Colab T4, 88 min) : Legal-BERT, 512 tokens, cross-entropy pondérée, 4 époques. Règle fixée avant le test : adopter la v2 si son macro-F1 de validation dépasse 0,7318. Validation : **0,8057** → v2 adoptée. Test évalué une fois : accuracy **0,8761**, macro-F1 **0,8124**, 1 type à F1 nul.
+- **Section 4.3** : comparaison avec la référence externe DistilBERT (prédictions recalculées sur Colab) : 0,8631 / 0,7760.
+- **Section 7** : McNemar v2 contre v1 (χ² = 112,5, p < 0,001), clauses longues (v2 : 0,793 de macro-F1 au-delà de 256 tokens), calibration v2 (ECE 0,0305, surconfiance d'environ 5 points).
+- **Section 8** : démonstration de bout en bout (top-3 des types + clauses proches).
+- **Section 9** : robustesse par famille de contrat estimée à partir des parties citées (de 0,943 pour les licences à 0,739 pour les baux), par forme du texte (pas de faiblesse), **fuite de données** (282 clauses de test présentes dans le train ; accuracy v2 de 0,8731 sur les clauses jamais vues), et liste des usages à proscrire.
+- **Présentation** : deck de 13 slides en anglais et guide de soutenance (modèle expliqué, questions du jury, pitch).
+- **Restent ouverts** : fichier de dépendances, Recall@k / MRR (faute de jugements de pertinence), ablation des quatre leviers de la v2, recalibration (temperature scaling).
+
 ## 5. Format des prochaines mises à jour
 
 Après chaque étape significative, ajouter une entrée contenant :

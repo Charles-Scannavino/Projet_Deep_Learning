@@ -4,120 +4,83 @@
 
 ## Équipe
 
-- **Charles Scannavino**
+- **Charles Scannavino** : entraînement de la v1 (BERT) sur Colab
 - **Jacques**
-- **Khadidja**
-
-La répartition des travaux sera précisée une fois validée par l'équipe. Les contributions de chaque personne sont suivies dans Git.
+- **Khadidja** : évaluation, audit, entraînement et évaluation de la v2 (Legal-BERT)
 
 ## Sujet et livrables
 
 Développer le cœur NLP d'un assistant de revue de clauses contractuelles pour une application de legal-tech :
 
-1. Classification des clauses par fine-tuning de **BERT ou CamemBERT**.
+1. Classification des clauses par fine-tuning de **BERT**.
 2. Pipeline de **tokenisation, entraînement et évaluation** sur un jeu de test tenu à part.
 3. **Recherche sémantique** de clauses similaires avec un Sentence-Transformer.
 4. **Audit** des biais, modes de défaillance et limites d'utilisation.
 
-**Échéance : 23 octobre 2026.** Livraison GitHub et présentation PowerPoint (10 minutes, puis 5 minutes de questions).
+**Échéance : 23 octobre 2026.** Livraison GitHub et présentation (10 minutes, puis 5 minutes de questions).
 
-## Données et outils
+## Données
 
-Le projet utilise **LEDGAR** (LexGLUE), chargé depuis Hugging Face :
+**LEDGAR** (benchmark LexGLUE), chargé depuis Hugging Face : `load_dataset("coastalcph/lex_glue", "ledgar")`. 80 000 clauses de contrats américains déposés auprès de la SEC, **100 types de clauses**, partitions 60 000 / 10 000 / 10 000 (entraînement / validation / test). Fort déséquilibre : 3 167 exemples pour *Governing Laws*, 23 pour *Books* (≈ 140 pour 1).
 
-```python
-from datasets import load_dataset
-ledgar = load_dataset("coastalcph/lex_glue", "ledgar")
-```
+## Modèles
 
-| Partition | Nombre de clauses |
-| --- | ---: |
-| Entraînement | 60 000 |
-| Validation | 10 000 |
-| Test | 10 000 |
+| Modèle | Rôle | Origine |
+| --- | --- | --- |
+| `bert-base-uncased` fine-tuné (**v1**) | Classification, 256 tokens, 2 époques, lr 2e-5 | Entraîné par l'équipe (`notebooks/colab.ipynb`) |
+| `nlpaueb/legal-bert-base-uncased` fine-tuné (**v2, modèle retenu**) | Classification, 512 tokens, cross-entropy pondérée (1/√fréquence), 4 époques, lr 3e-5, meilleure époque sur la validation | Entraîné par l'équipe (`notebooks/colab_v2_legalbert.ipynb`) |
+| `sentence-transformers/all-MiniLM-L6-v2` | Recherche sémantique (vecteurs de 384 dimensions) | Modèle public, utilisé tel quel |
+| `SalmanAbbasi/lexglue-ledgar-distilbert` | **Référence externe** de comparaison uniquement | Modèle public, non entraîné par l'équipe |
 
-Le dataset comporte **100 catégories de clauses**. Les modèles utilisés dans les notebooks sont `bert-base-uncased` (classification) et `sentence-transformers/all-MiniLM-L6-v2` (recherche sémantique).
+## Résultats (test, 10 000 clauses)
 
-## Notebooks et exécution
+| Modèle | Accuracy | Macro-F1 | Types à F1 = 0 |
+| --- | ---: | ---: | ---: |
+| Baseline (classe majoritaire) | 5,8 % | — | — |
+| BERT v1 | 84,48 % | 72,13 % | 9 |
+| DistilBERT (référence externe) | 86,31 % | 77,60 % | 2 |
+| **Legal-BERT v2** | **87,61 %** | **81,24 %** | **1** |
 
-| Notebook | Fonction |
+- **Choix de la v2 sur la validation**, avec une règle fixée avant de consulter le test : macro-F1 de validation 80,57 % contre 73,18 % pour la v1. Le test n'a été évalué qu'une fois pour la v2.
+- **Significativité** (test de McNemar) : v2 contre v1, χ² = 112,5 ; v2 contre DistilBERT, χ² = 25,1 ; p < 0,001 dans les deux cas.
+- **Fuite de données** : 282 clauses de test (2,8 %) figurent mot pour mot dans le train. Sur les 9 718 autres, la v2 obtient 87,31 % d'accuracy (section 9.3).
+
+## Recherche sémantique
+
+Banque de **60 000 clauses d'entraînement** (aucune clause de test) encodée avec all-MiniLM-L6-v2 ; requête → similarité cosinus → top-k. Évaluation qualitative sur des requêtes réelles (ex. : 5 résultats sur 5 de type *Governing Laws* pour une clause de droit de l'État de New York). Pas de Recall@k ni de MRR : il faudrait des jugements de pertinence annotés.
+
+## Audit (sections 4, 6, 7 et 9 du notebook)
+
+- **Par type de clause** : rapport complet sur les 100 types ; 9 types à F1 nul en v1 (quasi-synonymes et types rares), dont 8 récupérés par la v2.
+- **Clauses longues** : la v1 perd 7,2 points de macro-F1 au-delà de 256 tokens ; la v2 (512 tokens) 0,7 point.
+- **Calibration** : v1 bien calibrée (ECE 0,020) ; v2 surconfiante (ECE 0,031 ; 92,5 % de confiance pour 87,2 % de réussite).
+- **Par famille de contrat** (estimée à partir des parties nommées dans la clause) : de 94,3 % (licences) à 73,9 % (baux) ; points faibles : baux et contrats de services.
+- **Selon la forme** : pas de faiblesse sur les clauses en majuscules, avec des nombres ou avec des négations.
+
+**Le système ne doit pas être utilisé pour** : décider seul ; trancher sur les types fragiles (*Assigns*, *Applicable Laws*) ; traiter d'autres langues ou d'autres droits ; traiter des contrats éloignés des dépôts SEC sans nouvelle évaluation ; juger la validité juridique d'une clause ; lire la confiance comme une probabilité exacte. **Le modèle propose, le juriste décide.**
+
+## Notebooks
+
+| Notebook | Contenu |
 | --- | --- |
-| [`notebooks/colab.ipynb`](notebooks/colab.ipynb) | Fine-tuning BERT sur Google Colab / GPU T4, validation, export du modèle et copie dans Google Drive. |
-| [`notebooks/Projet_DL_NLP.ipynb`](notebooks/Projet_DL_NLP.ipynb) | Exploration LEDGAR, mini-entraînement de diagnostic, chargement du modèle BERT entraîné, évaluation, analyse des confusions et recherche sémantique. |
+| [`notebooks/Projet_DL_NLP.ipynb`](notebooks/Projet_DL_NLP.ipynb) | **Notebook principal**, entièrement exécuté : exploration (1), pipeline et mini-test (2), évaluation test de la v1 (3), audit et comparaison externe (4), recherche sémantique (5), audit approfondi (6), v2 (7), démonstration (8), robustesse et fuite de données (9). |
+| [`notebooks/colab.ipynb`](notebooks/colab.ipynb) | Entraînement de la v1 sur Colab (GPU T4). |
+| [`notebooks/colab_v2_legalbert.ipynb`](notebooks/colab_v2_legalbert.ipynb) | Entraînement et sélection de la v2 sur Colab (GPU T4), avec ses sorties. |
+| [`notebooks/audit_section6.ipynb`](notebooks/audit_section6.ipynb) | Brouillon autonome de la section 6 ; la version de référence est dans le notebook principal. |
 
-Les deux notebooks **contiennent des sorties des exécutions réalisées les 16 et 17 octobre 2026** et ont été synchronisés par le commit [`3e278a8`](https://github.com/Charles-Scannavino/Projet_Deep_Learning/commit/3e278a88d38a1a0dbd36181c553b2bbd83a1728b). Ils ne doivent pas être relancés sans examiner les cellules : certaines réentraînent le modèle ou consultent le jeu de test.
+Les prédictions sur le test sont versionnées pour que l'audit soit reproductible sans relancer l'inférence : `test_labels.npy`, `test_preds.npy` (v1), `test_preds_v2.npy` et `test_probs_v2.npy` (v2), `test_preds_distilbert.npy`.
 
-### Entraînement BERT — Google Colab
+## Reproduction
 
-1. Ouvrir `notebooks/colab.ipynb` avec [Google Colab](https://colab.research.google.com/) ; sélectionner **GPU T4**.
-2. Exécuter la vérification du GPU, l'installation des bibliothèques, le chargement de LEDGAR et la tokenisation.
-3. Lancer la cellule `Trainer` **uniquement lorsqu'un nouvel entraînement est réellement souhaité** : `bert-base-uncased`, 100 classes, `max_length=256`, learning rate `2e-5`, batch size 16, 2 époques.
-4. Après les 7 500 étapes, exécuter la sauvegarde locale `bert-ledgar/` et l'archive `bert-ledgar.zip` ; autoriser Google Drive puis copier le dossier vers `MyDrive/Projet_Deep_Learning/bert-ledgar/`.
-5. La dernière cellule évalue **la validation** avec `tok["validation"]`, sans relancer l'entraînement. Elle ne constitue pas une seconde évaluation du jeu de test.
+1. **Environnement** : Python 3.12 avec `torch`, `transformers`, `datasets`, `evaluate`, `scikit-learn`, `scipy`, `numpy`, `pandas`, `matplotlib`, `sentence-transformers`, `ipykernel`.
+2. **Poids des modèles** (non versionnés, trop volumineux) : extraire `bert-ledgar.zip` (v1) dans `models/bert-ledgar/`. Les poids de la v2 (`bert-ledgar-v2.zip`) sont produits par `colab_v2_legalbert.ipynb` sur Google Drive.
+3. **Notebook principal** : les sections d'audit se recalculent à partir des fichiers `.npy`, sans GPU. L'inférence complète de la section 3.2 prend environ 1 h 40 sur CPU.
+4. **Entraînements** : à relancer uniquement sur Colab avec GPU T4 (88 min par version).
 
-Les checkpoints Colab temporaires peuvent disparaître à la fermeture de la session. Le ZIP et la copie Drive permettent de **réutiliser les poids entraînés sans relancer `trainer.train()`**.
+## Organisation
 
-### Analyse du modèle — VS Code / Mac
+- [`CONTEXT.md`](CONTEXT.md) : exigences, décisions et conventions durables.
+- [`AVANCEMENT.md`](AVANCEMENT.md) : journal des expériences, preuves et étapes.
+- Branches : `main` (intégration), `Jacques` et `Khadidja` (travail), fusion par pull request.
 
-1. Cloner le dépôt privé et ouvrir `notebooks/Projet_DL_NLP.ipynb` dans VS Code.
-2. Utiliser un noyau Python disposant de `torch`, `transformers`, `datasets`, `evaluate`, `numpy`, `matplotlib`, `scikit-learn`, `sentence-transformers`, `accelerate` et `ipykernel`. L'exécution documentée a utilisé **Python 3.12.15** dans un environnement Conda `Projet_Deep_Learning`.
-3. Pour charger BERT, extraire `bert-ledgar.zip` en `models/bert-ledgar/`. Ce répertoire est ignoré par Git. Adapter le chemin du checkpoint à l'emplacement du clone, plutôt que de supposer que les poids sont inclus dans GitHub.
-4. Exécuter les sections **sélectivement** : exploration, chargement du checkpoint, analyse des résultats et recherche sémantique. Un mini-fine-tuning local figure également dans le notebook mais n'est pas nécessaire pour utiliser le modèle Colab.
-
-Exemple de chargement depuis la racine du clone :
-
-```python
-from pathlib import Path
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-
-checkpoint = Path("models/bert-ledgar").resolve()
-tokenizer = AutoTokenizer.from_pretrained(str(checkpoint), local_files_only=True)
-model = AutoModelForSequenceClassification.from_pretrained(str(checkpoint), local_files_only=True)
-model.eval()
-```
-
-**Attention aux limites du code actuel :** une cellule contient encore `!import datasets` (commande système ImageMagick, pas import Python) ; les statistiques de longueur tronquées à 512 tokens sous-estiment les très longues clauses ; la banque de recherche utilise actuellement le **split test**. Ces points sont consignés dans `AVANCEMENT.md` et doivent être corrigés/justifiés.
-
-## Résultats obtenus
-
-| Mesure | Résultat | Périmètre |
-| --- | ---: | --- |
-| Accuracy BERT | **84,24 %** | Validation, 10 000 clauses |
-| F1 macro BERT | **73,18 %** | Validation, 10 000 clauses |
-| Loss BERT | **0,6119** | Validation, après 2 époques |
-| Accuracy BERT | **84,48 %** | Test, 10 000 clauses |
-| F1 macro BERT (rapport par classe) | **environ 0,72** | Test ; rapport arrondi à deux décimales |
-
-Le fine-tuning complet sur GPU T4 a duré environ **1 h 28** pour deux époques (7 500 étapes). Le checkpoint a été conservé sur Google Drive et téléchargé sur Mac. Les prédictions test ont été produites localement (~12 min 32 s). Les résultats sont tirés des sorties enregistrées dans les notebooks.
-
-### Recherche sémantique et audit
-
-- **Recherche :** `all-MiniLM-L6-v2`, 10 000 clauses encodées, similarité cosinus et deux démonstrations de recherche top-5. Les exemples sont qualitatifs : **aucun Recall@k ou MRR vérifié à ce stade**.
-- **Audit initial :** rapports précision/rappel/F1 par catégorie et confusions ; faibles performances sur plusieurs catégories rares ou proches lexicalement. Une analyse approfondie des biais et des sous-groupes reste à faire.
-
-**Précaution d'évaluation :** le split test a déjà été consulté pendant les expérimentations. Il ne doit pas servir à ajuster les hyperparamètres ou à choisir rétrospectivement le meilleur modèle. Le corpus actuel du moteur de recherche est constitué de clauses du test ; cette limitation doit être corrigée ou clairement distinguée de l'évaluation de classification.
-
-## Organisation et suivi
-
-```text
-Projet_Deep_Learning/
-├── .gitignore
-├── README.md
-├── CONTEXT.md
-├── AVANCEMENT.md
-└── notebooks/
-    ├── Projet_DL_NLP.ipynb
-    └── colab.ipynb
-```
-
-- [`CONTEXT.md`](CONTEXT.md) décrit les exigences, décisions et conventions durables.
-- [`AVANCEMENT.md`](AVANCEMENT.md) consigne les expériences vérifiées, les preuves, les problèmes et les prochaines tâches.
-- Les poids BERT, caches, fichiers volumineux et données locales ne doivent pas être poussés sur GitHub.
-
-## Collaboration
-
-- `main` : branche d'intégration du travail commun.
-- `Jacques` et `Khadidja` : branches de travail dédiées aux deux collaborateurs.
-- Chaque contribution est proposée via une pull request vers `main`, après synchronisation de la branche avec la version courante et vérification des fichiers modifiés.
-
-Le système est un **prototype d'analyse documentaire** : ses sorties ne constituent pas un avis juridique, et tout usage dans un contrat réel nécessite une vérification humaine.
+Le système est un **prototype d'analyse documentaire** : ses sorties ne constituent pas un avis juridique, et tout usage sur un contrat réel nécessite une vérification humaine.
