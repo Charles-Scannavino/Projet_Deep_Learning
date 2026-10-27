@@ -130,6 +130,7 @@ Les prédictions sur le test sont versionnées pour que l'audit soit reproductib
 
 ## Organisation
 
+- [`presentation/Contract_Clause_pitch.pdf`](presentation/Contract_Clause_pitch.pdf) : slides de la soutenance (13 slides, en anglais).
 - [`CONTEXT.md`](CONTEXT.md) : exigences, décisions et conventions durables.
 - [`AVANCEMENT.md`](AVANCEMENT.md) : journal des expériences, preuves et étapes.
 - Branches : `main` (intégration), `Jacques` et `Khadidja` (travail), fusion par pull request.
