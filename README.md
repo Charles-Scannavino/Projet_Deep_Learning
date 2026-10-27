@@ -32,6 +32,57 @@ Développer le cœur NLP d'un assistant de revue de clauses contractuelles pour 
 | `sentence-transformers/all-MiniLM-L6-v2` | Recherche sémantique (vecteurs de 384 dimensions) | Modèle public, utilisé tel quel |
 | `SalmanAbbasi/lexglue-ledgar-distilbert` | **Référence externe** de comparaison uniquement | Modèle public, non entraîné par l'équipe |
 
+## Télécharger le modèle BERT fine-tuné (v1)
+
+Le modèle v1 entraîné (poids BERT et tokenizer, 100 classes LEDGAR) est disponible sous forme d'archive ZIP attachée à une **GitHub Release** du dépôt privé :
+
+- **[Release `v1.0-bert-ledgar` — BERT LEDGAR, modèle fine-tuné](https://github.com/Charles-Scannavino/Projet_Deep_Learning/releases/tag/v1.0-bert-ledgar)**
+- **[Télécharger directement `bert-ledgar.zip` (~406 Mo)](https://github.com/Charles-Scannavino/Projet_Deep_Learning/releases/download/v1.0-bert-ledgar/bert-ledgar.zip)**
+
+Le fichier est hébergé dans les **Assets de la Release**, pas dans l'arborescence du code. L'accès au téléchargement nécessite un compte GitHub autorisé à lire ce repository privé.
+
+Après téléchargement, extraire le dossier `bert-ledgar/` dans `models/bert-ledgar/` à la racine du clone. Le notebook principal le charge par le chemin relatif `../models/bert-ledgar`, sans nouvel entraînement. Les poids de la v2 (`bert-ledgar-v2.zip`) sont produits par `notebooks/colab_v2_legalbert.ipynb` sur Google Drive.
+
+## Comment fonctionne le modèle et comment l'utiliser ?
+
+**Classification des clauses.** Le modèle est un BERT préentraîné puis *fine-tuné* sur les **60 000 clauses d'entraînement LEDGAR**, réparties en **100 catégories**. Lorsqu'une clause en anglais est fournie, son tokenizer **WordPiece** la convertit en identifiants numériques (`input_ids`) et construit un masque d'attention (`attention_mask`). Le texte est limité à **256 tokens** pour la v1 et à **512 tokens** pour la v2 ; au-delà, la fin est tronquée. L'encodeur Transformer exploite la **self-attention bidirectionnelle** pour représenter les mots dans leur contexte. Sa tête de classification produit **100 logits** ; la catégorie prédite correspond au logit maximal. On peut appliquer un *softmax* pour obtenir des scores normalisés, mais ceux-ci ne doivent pas être interprétés comme des probabilités juridiques parfaitement fiables. Pendant le fine-tuning, la **cross-entropy**, la rétropropagation et l'optimiseur ont ajusté les poids du modèle pour rapprocher ses prédictions des catégories réelles. **Une fois le checkpoint sauvegardé, l'inférence ne nécessite aucun nouvel entraînement.**
+
+**Tester une clause avec le modèle sauvegardé** (depuis la racine du clone, après extraction du ZIP en `models/bert-ledgar/`) :
+
+```python
+import torch
+from pathlib import Path
+from datasets import load_dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+checkpoint = Path("models/bert-ledgar").resolve()
+assert (checkpoint / "model.safetensors").is_file(), "Télécharger et extraire bert-ledgar.zip"
+
+tokenizer = AutoTokenizer.from_pretrained(str(checkpoint), local_files_only=True)
+model = AutoModelForSequenceClassification.from_pretrained(
+    str(checkpoint), local_files_only=True
+)
+model.eval()
+
+# Les noms et l'ordre des catégories correspondent au dataset utilisé pendant l'entraînement.
+labels = load_dataset("coastalcph/lex_glue", "ledgar")["train"].features["label"].names
+
+clause = "This Agreement shall be governed by the laws of the State of New York."
+inputs = tokenizer(clause, return_tensors="pt", truncation=True, max_length=256)
+
+with torch.inference_mode():
+    logits = model(**inputs).logits
+    scores = torch.softmax(logits, dim=-1)[0]
+    pred_id = int(scores.argmax())
+
+print("Catégorie prédite :", labels[pred_id])
+print("Score softmax :", round(float(scores[pred_id]), 4))
+```
+
+Installer au minimum `torch`, `transformers` et `datasets`. Pour la v2, pointer `checkpoint` vers `models/bert-ledgar-v2` et utiliser `max_length=512`. La sortie illustre une **prédiction du modèle**, pas une qualification juridique définitive. La section 8 du notebook principal propose une démonstration complète (top-3 des types et clauses les plus proches).
+
+**Recherche sémantique (second modèle distinct).** `sentence-transformers/all-MiniLM-L6-v2` encode chaque clause de la banque documentaire et la requête de l'utilisateur dans un espace vectoriel commun. Après normalisation, la **similarité cosinus** est calculée par produit scalaire, puis les `k` clauses les plus proches sont retournées avec leur score. Cette recherche ne requiert pas le checkpoint BERT de classification.
+
 ## Résultats (test, 10 000 clauses)
 
 | Modèle | Accuracy | Macro-F1 | Types à F1 = 0 |
@@ -53,7 +104,7 @@ Banque de **60 000 clauses d'entraînement** (aucune clause de test) encodée av
 
 - **Par type de clause** : rapport complet sur les 100 types ; 9 types à F1 nul en v1 (quasi-synonymes et types rares), dont 8 récupérés par la v2.
 - **Clauses longues** : la v1 perd 7,2 points de macro-F1 au-delà de 256 tokens ; la v2 (512 tokens) 0,7 point.
-- **Calibration** : v1 bien calibrée (ECE 0,020) ; v2 surconfiante (ECE 0,031 ; 92,5 % de confiance pour 87,2 % de réussite).
+- **Calibration** : écart entre confiance moyenne et réussite réelle de +0,8 point pour la v1 (84,5 % contre 83,7 %) et de +5,3 points pour la v2 (92,5 % contre 87,2 %) : la v2 est surconfiante. Les ECE affichés (0,020 et 0,031) comparent chaque tranche à son centre ; ils restent à recalculer avec la confiance moyenne de chaque tranche, la définition standard.
 - **Par famille de contrat** (estimée à partir des parties nommées dans la clause) : de 94,3 % (licences) à 73,9 % (baux) ; points faibles : baux et contrats de services.
 - **Selon la forme** : pas de faiblesse sur les clauses en majuscules, avec des nombres ou avec des négations.
 
